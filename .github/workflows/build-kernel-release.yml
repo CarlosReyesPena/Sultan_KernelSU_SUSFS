@@ -3,7 +3,7 @@ name: Build and Release Sultan Kernels
 permissions:
   contents: write  # Allow writing to repository contents (for pushing tags)
   actions: write   # Allows triggering actions
-  
+
 on:
   workflow_dispatch:
     inputs:
@@ -23,6 +23,9 @@ jobs:
   build-kernel-a15-zumapro:
     uses: ./.github/workflows/zumapro.yml
     secrets: inherit
+  build-kernel-a15-neutrino:
+    uses: ./.github/workflows/neutrino_caimito.yml
+    secrets: inherit
 
   trigger-release:
     runs-on: ubuntu-latest
@@ -30,21 +33,22 @@ jobs:
         - build-kernel-a15-gs201
         - build-kernel-a15-zuma
         - build-kernel-a15-zumapro
+        - build-kernel-a15-neutrino
     if: ${{ inputs.make_release }}
     env:
-      REPO_OWNER: TheWildJames
+      REPO_OWNER: CarlosReyesPena
       REPO_NAME: Sultan_KernelSU_SUSFS
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RELEASE_NAME: "*TEST BUILD* Sultan Kernels With KernelSU Next & SUSFS v1.5.5 *TEST BUILD*"
       RELEASE_NOTES: |
         This release contains KernelSU Next and SUSFS v1.5.5
-        
-        Module: 
+
+        Module:
         -> https://github.com/sidex15/ksu_module_susfs
-        
+
         Non-Official Managers:
         -> https://github.com/KernelSU-Next/KernelSU-Next
-        
+
         Features:
         [+] KernelSU-Next
         [+] SUSFS v1.5.5
@@ -66,20 +70,20 @@ jobs:
             if [ -z "$LATEST_TAG" ]; then
               LATEST_TAG="v1.5.5-r0"  # Default to v1.5.3-0 if no tag exists
             fi
-            
+
             # Increment the suffix (e.g., v1.5.3-0 becomes v1.5.3-1)
             NEW_TAG=$(echo "$LATEST_TAG" | awk -F'-r' '{suffix=$2; if (!suffix) suffix=0; suffix++; printf "%s-r%d", $1, suffix}')
-            
+
             # Output the new tag to be used
             echo "New tag: $NEW_TAG"
-            
+
             # Set the new tag as an environment variable to be used in later steps
             echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
-            
+
             # Create the tag in the repository
             git tag $NEW_TAG
             git push origin $NEW_TAG
-            
+
       # Download Artifacts for A12 (Only if A12 Build is successful or input is true or empty)
       - name: Download Artifacts
         uses: actions/download-artifact@v4
